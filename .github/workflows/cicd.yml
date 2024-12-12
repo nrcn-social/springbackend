@@ -32,8 +32,8 @@ jobs:
       - name: Build Docker Image
         working-directory: ./springbackend
         run: |
-          docker build -t springbackend/springbackend:${{ github.run_id }} .
-          docker push springbackend/springbackend:${{ github.run_id }}
+          docker build -t nithyanandnadar/springbackend:${{ github.run_id }} .
+          docker push nithyanandnadar/springbackend:${{ github.run_id }}
 
   Deploy_to_Production:
     needs: Build_Docker_Image
@@ -41,7 +41,7 @@ jobs:
     if: github.ref == 'refs/heads/main'
     steps:
       - name: Pull Docker Image
-        run: docker pull springbackend/springbackend:${{ github.run_id }}
+        run: docker pull nithyanandnadar/springbackend:${{ github.run_id }}
       - name: Remove Old Container
         run: docker rm -f springbackend-container || true
       - name: Run Docker Container
@@ -49,4 +49,4 @@ jobs:
           docker run -d \
             -p 5500:5500 \
             --name springbackend-container \
-            springbackend/springbackend:${{ github.run_id }}
+            nithyanandnadar/springbackend:${{ github.run_id }}
