@@ -6,39 +6,32 @@ on:
       - master
 
 jobs:
-  build-and-deploy:
-    runs-on: ubuntu-latest
+  build:
+    runs-on: [ubuntu-latest]
     steps:
-      # Checkout Code
-      - name: Checkout Source
+      - name: Checkout source
         uses: actions/checkout@v3
-
-      # Setup Java
       - name: Setup Java
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
           java-version: '17'
-
-      # Build Project
 #      - name: Build Project
 #        run: mvn clean install -DskipTests
+      - name: Login to docker hub
+        run: docker login -u nithyanandnadar.m@gmail.com -p Mumbai@2050
+      - name: Build docker image
+        run: docker build -t springbackend/springbootproject .
+      - name: Publish image to docker hub
+        run: docker push springbackend/springbootproject:latest
 
-      # Login to Docker Hub
-      - name: Login to Docker Hub
-        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-
-      # Build and Push Docker Image
-      - name: Build and Push Docker Image
-        run: |
-          docker build -t nithyanandnadar/springbackend:latest .
-          docker push nithyanandnadar/springbackend:latest
-
-      # Deploy on AWS EC2
-      - name: Deploy to EC2
-        run: |
-          ssh -o StrictHostKeyChecking=no -i ${{ secrets.EC2_KEY }} ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
-          docker pull nithyanandnadar/springbackend:latest
-          docker rm -f springbootproject-container || true
-          docker run -d -p 5500:5000 --name springbootproject-container nithyanandnadar/springbackend:latest
-          EOF
+  deploy:
+    needs: build
+    runs-on: [aws-ec2]
+    steps:
+      - name: Pull Image from docker hub
+        run: docker pull springbackend/springbootproject:latest
+      - name: Delete old container
+        run: docker rm -f springbootproject-container
+      - name: Run docker container
+        run:  docker run -d -p 5500:5000 --name springbootproject-container springbackend/springbootproject
