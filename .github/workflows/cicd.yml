@@ -1,53 +1,52 @@
-name: CICD
+name: CI/CD Pipeline
 
 on:
   push:
     branches:
-      - master
+      - main
 
 jobs:
-  build:
+  Build_and_Test:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout source
-        uses: actions/checkout@v3
-
-      - name: Setup Java
-        uses: actions/setup-java@v3
+      - uses: actions/checkout@v3
+      - uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
           java-version: '17'
-
-      - name: Build Project
+      - name: Build and Test
         working-directory: ./springbackend
-        run: mvn clean install -DskipTests
+        run: mvn clean install
 
+  Build_Docker_Image:
+    needs: Build_and_Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
       - name: Login to Docker Hub
         run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-
       - name: Build Docker Image
+        working-directory: ./springbackend
         run: |
-          docker build -t springbackend/springbackend:latest .
-          docker tag springbackend/springbackend:latest nithyanandnadar/springbackend:${{ github.sha }}
+          docker build -t springbackend/springbackend:${{ github.run_id }} .
+          docker push springbackend/springbackend:${{ github.run_id }}
 
-      - name: Push Docker Image
-        run: |
-          docker push springbackend/springbackend:latest
-          docker push springbackend/springbackend:${{ github.sha }}
-
-  deploy:
-    needs: build
+  Deploy_to_Production:
+    needs: Build_Docker_Image
     runs-on: self-hosted
+    if: github.ref == 'refs/heads/main'
     steps:
       - name: Pull Docker Image
-        run: docker pull springbackend/springbackend:latest
-
+        run: docker pull springbackend/springbackend:${{ github.run_id }}
       - name: Remove Old Container
         run: docker rm -f springbackend-container || true
-
       - name: Run Docker Container
         run: |
           docker run -d \
             -p 5500:5000 \
             --name springbackend-container \
-            springbackend/springbackend:latest
+            springbackend/springbackend:${{ github.run_id }}
