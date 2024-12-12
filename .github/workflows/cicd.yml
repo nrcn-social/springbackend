@@ -27,20 +27,20 @@ jobs:
 
       - name: Build Docker Image
         run: |
-          docker build -t nithyanandnadar/springbackend:latest .
-          docker tag nithyanandnadar/springbackend:latest nithyanandnadar/springbackend:${{ github.sha }}
+          docker build -t springbackend/springbackend:latest .
+          docker tag springbackend/springbackend:latest nithyanandnadar/springbackend:${{ github.sha }}
 
       - name: Push Docker Image
         run: |
-          docker push nithyanandnadar/springbackend:latest
-          docker push nithyanandnadar/springbackend:${{ github.sha }}
+          docker push springbackend/springbackend:latest
+          docker push springbackend/springbackend:${{ github.sha }}
 
   deploy:
     needs: build
     runs-on: self-hosted
     steps:
       - name: Pull Docker Image
-        run: docker pull nithyanandnadar/springbackend:latest
+        run: docker pull springbackend/springbackend:latest
 
       - name: Remove Old Container
         run: docker rm -f springbackend-container || true
@@ -50,4 +50,4 @@ jobs:
           docker run -d \
             -p 5500:5000 \
             --name springbackend-container \
-            nithyanandnadar/springbackend:latest
+            springbackend/springbackend:latest
