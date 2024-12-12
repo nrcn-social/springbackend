@@ -26,27 +26,27 @@ jobs:
 
       - name: Build Docker Image
         run: |
-          docker build -t springbackend/springbootproject:latest .
-          docker tag springbackend/springbootproject:latest springbackend/springbootproject:${{ github.sha }}
+          docker build -t nithyanandnadar/springbackend:latest .
+          docker tag nithyanandnadar/springbackend:latest nithyanandnadar/springbackend:${{ github.sha }}
 
       - name: Push Docker Image
         run: |
-          docker push springbackend/springbootproject:latest
-          docker push springbackend/springbootproject:${{ github.sha }}
+          docker push nithyanandnadar/springbackend:latest
+          docker push nithyanandnadar/springbackend:${{ github.sha }}
 
   deploy:
     needs: build
     runs-on: self-hosted
     steps:
       - name: Pull Docker Image
-        run: docker pull springbackend/springbootproject:latest
+        run: docker pull nithyanandnadar/springbackend:latest
 
       - name: Remove Old Container
-        run: docker rm -f springbootproject-container || true
+        run: docker rm -f springbackend-container || true
 
       - name: Run Docker Container
         run: |
           docker run -d \
             -p 5500:5000 \
-            --name springbootproject-container \
-            springbackend/springbootproject:latest
+            --name springbackend-container \
+            nithyanandnadar/springbackend:latest
