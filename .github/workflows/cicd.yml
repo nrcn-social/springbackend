@@ -47,6 +47,6 @@ jobs:
       - name: Run Docker Container
         run: |
           docker run -d \
-            -p 5500:5000 \
+            -p 5500:5500 \
             --name springbackend-container \
             springbackend/springbackend:${{ github.run_id }}
